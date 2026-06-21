@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Intellect Predictor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-deep:     #07060F;
+      --bg-card:     #110E24;
+      --bg-input:    #1A1630;
+      --accent-cyan: #00D4FF;
+      --accent-violet: #9B6DFF;
+      --accent-pink: #FF6BD6;
+      --text-primary: #F0EEFF;
+      --text-muted:  #7B7A99;
+      --border:      rgba(155,109,255,0.22);
+      --glow-cyan:   0 0 40px rgba(0,212,255,0.25);
+      --glow-violet: 0 0 60px rgba(155,109,255,0.3);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg-deep);
+      font-family: 'Inter', sans-serif;
+      color: var(--text-primary);
+      overflow-x: hidden;
+    }
+
+    /* ── STAR FIELD ── */
+    #starfield {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    }
+    .star {
+      position: absolute; border-radius: 50%; background: #fff;
+      animation: twinkle var(--dur, 3s) ease-in-out infinite;
+      opacity: 0;
+    }
+    @keyframes twinkle {
+      0%,100% { opacity: 0; transform: scale(0.6); }
+      50%      { opacity: var(--op, 0.7); transform: scale(1); }
+    }
+
+    /* ── LAYOUT ── */
+    .page-wrapper {
+      position: relative; z-index: 1;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 0 1.25rem 4rem;
+    }
+
+    /* ── NAVBAR ── */
+    nav {
+      width: 100%; max-width: 1100px;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1.5rem 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0;
+    }
+    .logo {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.2rem; font-weight: 700; letter-spacing: -.02em;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-violet));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .nav-badge {
+      font-size: .72rem; font-weight: 500; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--text-muted);
+      border: 1px solid var(--border); border-radius: 20px;
+      padding: .3rem .85rem;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      width: 100%; max-width: 1100px;
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 3rem; align-items: center;
+      padding: 5rem 0 3.5rem;
+    }
+    @media(max-width:760px) {
+      .hero { grid-template-columns: 1fr; padding: 3rem 0 2rem; text-align: center; }
+      .hero-visual { order: -1; }
+    }
+
+    .hero-eyebrow {
+      font-size: .72rem; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--accent-cyan); font-weight: 500; margin-bottom: 1.1rem;
+    }
+    .hero-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2.2rem, 5vw, 3.4rem);
+      font-weight: 700; line-height: 1.12; letter-spacing: -.03em;
+      margin-bottom: 1.25rem;
+    }
+    .hero-title span {
+      background: linear-gradient(135deg, var(--accent-cyan) 0%, var(--accent-violet) 60%, var(--accent-pink) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-sub {
+      font-size: 1rem; line-height: 1.7; color: var(--text-muted);
+      max-width: 420px; margin-bottom: 2rem;
+    }
+    .hero-stats {
+      display: flex; gap: 2rem;
+    }
+    @media(max-width:760px) { .hero-stats { justify-content: center; } }
+    .stat { display: flex; flex-direction: column; }
+    .stat-num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.9rem; font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-violet));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .stat-label { font-size: .72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .08em; }
+
+    /* ── BRAIN ORB (SVG) ── */
+    .hero-visual {
+      display: flex; justify-content: center; align-items: center;
+    }
+    .orb-wrap {
+      position: relative; width: 320px; height: 320px;
+    }
+    .orb-ring {
+      position: absolute; border-radius: 50%; border: 1px solid;
+      top: 50%; left: 50%; transform: translate(-50%,-50%);
+      animation: spin var(--spd) linear infinite;
+    }
+    .orb-ring:nth-child(1) { width: 300px; height: 300px; border-color: rgba(0,212,255,.15); --spd: 18s; }
+    .orb-ring:nth-child(2) { width: 250px; height: 250px; border-color: rgba(155,109,255,.2); --spd: 12s; animation-direction: reverse; }
+    .orb-ring:nth-child(3) { width: 200px; height: 200px; border-color: rgba(255,107,214,.18); --spd: 8s; }
+    @keyframes spin { to { transform: translate(-50%,-50%) rotate(360deg); } }
+
+    .orb-core {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      width: 160px; height: 160px; border-radius: 50%;
+      background: radial-gradient(circle at 38% 36%, #2a1a6e 0%, #0a0820 70%);
+      box-shadow: 0 0 60px rgba(155,109,255,.55), 0 0 120px rgba(0,212,255,.22), inset 0 0 30px rgba(155,109,255,.2);
+      display: flex; align-items: center; justify-content: center;
+      animation: breathe 4s ease-in-out infinite;
+    }
+    @keyframes breathe {
+      0%,100% { box-shadow: 0 0 60px rgba(155,109,255,.55), 0 0 120px rgba(0,212,255,.22), inset 0 0 30px rgba(155,109,255,.2); }
+      50%      { box-shadow: 0 0 90px rgba(155,109,255,.8), 0 0 160px rgba(0,212,255,.35), inset 0 0 50px rgba(155,109,255,.35); }
+    }
+
+    /* Brain SVG inside orb */
+    .brain-svg { width: 80px; height: 80px; opacity: .9; }
+
+    /* Floating particles */
+    .particle {
+      position: absolute; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent-cyan);
+      animation: orbit var(--od,6s) linear infinite;
+      top: 50%; left: 50%;
+    }
+    .particle:nth-child(odd)  { background: var(--accent-violet); }
+    .particle:nth-child(3n)   { background: var(--accent-pink); width:4px; height:4px; }
+    @keyframes orbit {
+      from { transform: rotate(var(--start,0deg)) translateX(var(--r,130px)) rotate(calc(-1*var(--start,0deg))); }
+      to   { transform: rotate(calc(var(--start,0deg) + 360deg)) translateX(var(--r,130px)) rotate(calc(-1*(var(--start,0deg) + 360deg))); }
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      width: 100%; max-width: 1100px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent-violet), var(--accent-cyan), transparent);
+      margin: 0 auto 3.5rem;
+      opacity: .35;
+    }
+
+    /* ── FORM SECTION ── */
+    .form-section {
+      width: 100%; max-width: 680px;
+    }
+    .section-label {
+      font-size: .7rem; letter-spacing: .16em; text-transform: uppercase;
+      color: var(--accent-violet); font-weight: 600;
+      margin-bottom: .6rem; text-align: center;
+    }
+    .section-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.65rem; font-weight: 700; letter-spacing: -.02em;
+      text-align: center; margin-bottom: .55rem;
+    }
+    .section-desc {
+      font-size: .88rem; color: var(--text-muted); text-align: center;
+      line-height: 1.65; margin-bottom: 2.5rem;
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.5rem 2.25rem;
+      box-shadow: 0 8px 60px rgba(0,0,0,.55), var(--glow-violet);
+      position: relative; overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-violet), var(--accent-pink));
+    }
+    .card::after {
+      content: '';
+      position: absolute; top: -80px; right: -80px;
+      width: 240px; height: 240px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(155,109,255,.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ── INPUT GROUPS ── */
+    .inputs-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 1.4rem; margin-bottom: 1.4rem;
+    }
+    @media(max-width:520px) { .inputs-grid { grid-template-columns: 1fr; } }
+
+    .field { display: flex; flex-direction: column; gap: .5rem; }
+
+    .field-label {
+      font-size: .72rem; font-weight: 600; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--text-muted);
+      display: flex; align-items: center; gap: .45rem;
+    }
+    .field-label svg { opacity: .75; }
+
+    .field-input {
+      background: var(--bg-input);
+      border: 1.5px solid var(--border);
+      border-radius: 10px; color: var(--text-primary);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.35rem; font-weight: 500;
+      padding: .85rem 1.1rem;
+      outline: none; transition: border-color .2s, box-shadow .2s;
+      -moz-appearance: textfield;
+    }
+    .field-input::-webkit-inner-spin-button,
+    .field-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .field-input::placeholder { color: rgba(240,238,255,.18); font-size: 1rem; }
+    .field-input:focus {
+      border-color: var(--accent-violet);
+      box-shadow: 0 0 0 3px rgba(155,109,255,.18);
+    }
+
+    .field-hint { font-size: .7rem; color: var(--text-muted); }
+
+    /* ── RANGE SLIDER (IQ) ── */
+    .iq-range-wrap { position: relative; }
+    .iq-display {
+      position: absolute; right: 1rem; top: 50%;
+      transform: translateY(-50%);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1rem; font-weight: 600;
+      color: var(--accent-cyan); pointer-events: none;
+    }
+
+    /* ── VISUAL METERS ── */
+    .meters-row {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 1rem; margin-bottom: 1.5rem;
+    }
+    @media(max-width:520px) { .meters-row { grid-template-columns: 1fr; } }
+
+    .meter-block {
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--border);
+      border-radius: 10px; padding: .9rem 1rem;
+    }
+    .meter-top {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: .55rem;
+    }
+    .meter-name { font-size: .7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .09em; }
+    .meter-val {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .95rem; font-weight: 700; color: var(--text-primary);
+    }
+    .meter-bar-bg {
+      height: 5px; background: rgba(255,255,255,.06);
+      border-radius: 99px; overflow: hidden;
+    }
+    .meter-bar-fill {
+      height: 100%; border-radius: 99px;
+      transition: width .4s cubic-bezier(.4,0,.2,1);
+    }
+    .fill-cgpa { background: linear-gradient(90deg, var(--accent-violet), var(--accent-cyan)); }
+    .fill-iq   { background: linear-gradient(90deg, var(--accent-pink),  var(--accent-violet)); }
+
+    /* ── SUBMIT BTN ── */
+    .btn-predict {
+      width: 100%;
+      background: linear-gradient(135deg, var(--accent-violet) 0%, var(--accent-cyan) 100%);
+      border: none; border-radius: 12px;
+      color: #fff; cursor: pointer;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1rem; font-weight: 700; letter-spacing: .04em;
+      padding: 1rem 1.5rem;
+      position: relative; overflow: hidden;
+      transition: transform .15s, box-shadow .2s;
+      display: flex; align-items: center; justify-content: center; gap: .6rem;
+    }
+    .btn-predict:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(155,109,255,.45);
+    }
+    .btn-predict:active { transform: translateY(0); }
+    .btn-predict::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,.12), transparent);
+    }
+
+    /* ── RESULT AREA (Flask renders here) ── */
+    .result-area {
+      margin-top: 1.5rem;
+    }
+    /* Flask will inject result inside #prediction-result */
+    #prediction-result {
+      background: rgba(0,212,255,.06);
+      border: 1px solid rgba(0,212,255,.25);
+      border-radius: 12px;
+      padding: 1.2rem 1.4rem;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.05rem; font-weight: 500;
+      color: var(--accent-cyan);
+      text-align: center;
+      display: none; /* shown by Flask via template / JS */
+    }
+    #prediction-result.visible { display: block; }
+
+    /* ── FEATURE PILLS ── */
+    .pills {
+      display: flex; flex-wrap: wrap; gap: .6rem;
+      justify-content: center; margin-bottom: 2rem;
+    }
+    .pill {
+      font-size: .7rem; letter-spacing: .07em; text-transform: uppercase;
+      font-weight: 600; padding: .35rem .9rem; border-radius: 99px;
+      border: 1px solid var(--border); color: var(--text-muted);
+      background: rgba(255,255,255,.03);
+    }
+
+    /* ── INFO CARDS ROW ── */
+    .info-row {
+      width: 100%; max-width: 1100px;
+      display: grid; grid-template-columns: repeat(3,1fr);
+      gap: 1.25rem; margin-top: 4rem;
+    }
+    @media(max-width:760px) { .info-row { grid-template-columns: 1fr; } }
+
+    .info-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.6rem 1.5rem;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .info-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 40px rgba(0,0,0,.4);
+    }
+    .info-icon {
+      width: 44px; height: 44px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1rem;
+    }
+    .icon-cyan   { background: rgba(0,212,255,.1); }
+    .icon-violet { background: rgba(155,109,255,.1); }
+    .icon-pink   { background: rgba(255,107,214,.1); }
+
+    .info-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .95rem; font-weight: 700; margin-bottom: .45rem;
+    }
+    .info-body { font-size: .8rem; color: var(--text-muted); line-height: 1.65; }
+
+    /* ── FOOTER ── */
+    footer {
+      margin-top: 5rem;
+      font-size: .72rem; color: var(--text-muted);
+      text-align: center; letter-spacing: .04em;
+      border-top: 1px solid var(--border);
+      padding-top: 2rem;
+      width: 100%; max-width: 1100px;
+    }
+    footer a { color: var(--accent-violet); text-decoration: none; }
+
+    /* ── FLASH MESSAGES (Flask) ── */
+    .flash { padding: .8rem 1rem; border-radius: 8px; font-size: .85rem; margin-bottom: 1rem; }
+    .flash-error   { background: rgba(255,80,80,.1);  border:1px solid rgba(255,80,80,.3);  color: #ff8080; }
+    .flash-success { background: rgba(0,212,255,.08); border:1px solid rgba(0,212,255,.25); color: var(--accent-cyan); }
+  </style>
+</head>
+<body>
+
+<!-- Star field -->
+<canvas id="starfield"></canvas>
+
+<div class="page-wrapper">
+
+  <!-- ── NAVBAR ── -->
+  <nav>
+    <div class="logo">⬡ IntellectAI</div>
+    <div class="nav-badge">Academic Intelligence Engine</div>
+  </nav>
+
+  <!-- ── HERO ── -->
+  <section class="hero">
+    <div class="hero-copy">
+      <div class="hero-eyebrow">Powered by Predictive Analytics</div>
+      <h1 class="hero-title">
+        Decode Your<br><span>Academic Potential</span>
+      </h1>
+      <p class="hero-sub">
+        Enter your CGPA and IQ score to unlock a deep-learning prediction of your academic trajectory and cognitive performance tier.
+      </p>
+      <div class="hero-stats">
+        <div class="stat">
+          <span class="stat-num">98%</span>
+          <span class="stat-label">Accuracy</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num">50K+</span>
+          <span class="stat-label">Students</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num">0.4s</span>
+          <span class="stat-label">Prediction</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Orb -->
+    <div class="hero-visual">
+      <div class="orb-wrap">
+        <div class="orb-ring"></div>
+        <div class="orb-ring"></div>
+        <div class="orb-ring"></div>
+        <!-- Orbiting particles -->
+        <div class="particle" style="--r:138px;--start:0deg;  --od:7s"></div>
+        <div class="particle" style="--r:138px;--start:72deg; --od:7s"></div>
+        <div class="particle" style="--r:138px;--start:144deg;--od:7s"></div>
+        <div class="particle" style="--r:138px;--start:216deg;--od:7s"></div>
+        <div class="particle" style="--r:138px;--start:288deg;--od:7s"></div>
+        <div class="particle" style="--r:108px;--start:36deg; --od:5s"></div>
+        <div class="particle" style="--r:108px;--start:180deg;--od:5s"></div>
+        <div class="particle" style="--r:108px;--start:324deg;--od:5s"></div>
+
+        <!-- Core -->
+        <div class="orb-core">
+          <!-- Brain SVG inline -->
+          <svg class="brain-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="bg1" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+                <stop offset="0%"  stop-color="#00D4FF"/>
+                <stop offset="100%" stop-color="#9B6DFF"/>
+              </linearGradient>
+            </defs>
+            <!-- Simplified brain shape -->
+            <path d="M50 15 C38 10 22 16 20 30 C16 34 14 40 17 46 C12 52 14 62 20 66 C22 76 32 82 42 80 C44 85 48 87 50 87 C52 87 56 85 58 80 C68 82 78 76 80 66 C86 62 88 52 83 46 C86 40 84 34 80 30 C78 16 62 10 50 15Z" fill="url(#bg1)" opacity="0.9"/>
+            <!-- Folds -->
+            <path d="M35 35 Q40 28 50 32 Q60 28 65 35" stroke="#fff" stroke-width="1.5" fill="none" stroke-linecap="round" opacity=".5"/>
+            <path d="M28 50 Q35 43 44 48 Q50 43 56 48 Q65 43 72 50" stroke="#fff" stroke-width="1.5" fill="none" stroke-linecap="round" opacity=".5"/>
+            <path d="M30 64 Q38 57 48 62 Q52 57 62 64" stroke="#fff" stroke-width="1.5" fill="none" stroke-linecap="round" opacity=".45"/>
+            <!-- Midline -->
+            <line x1="50" y1="18" x2="50" y2="84" stroke="rgba(255,255,255,.3)" stroke-width="1" stroke-dasharray="3 3"/>
+            <!-- Nodes -->
+            <circle cx="35" cy="40" r="3" fill="#00D4FF" opacity=".8"/>
+            <circle cx="65" cy="40" r="3" fill="#9B6DFF" opacity=".8"/>
+            <circle cx="28" cy="57" r="2.5" fill="#FF6BD6" opacity=".8"/>
+            <circle cx="72" cy="57" r="2.5" fill="#00D4FF" opacity=".8"/>
+            <circle cx="42" cy="70" r="2" fill="#9B6DFF" opacity=".75"/>
+            <circle cx="58" cy="70" r="2" fill="#FF6BD6" opacity=".75"/>
+            <!-- Connections -->
+            <line x1="35" y1="40" x2="65" y2="40" stroke="rgba(0,212,255,.3)" stroke-width="1"/>
+            <line x1="35" y1="40" x2="28" y2="57" stroke="rgba(155,109,255,.3)" stroke-width="1"/>
+            <line x1="65" y1="40" x2="72" y2="57" stroke="rgba(155,109,255,.3)" stroke-width="1"/>
+            <line x1="28" y1="57" x2="42" y2="70" stroke="rgba(255,107,214,.3)" stroke-width="1"/>
+            <line x1="72" y1="57" x2="58" y2="70" stroke="rgba(255,107,214,.3)" stroke-width="1"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── DIVIDER ── -->
+  <div class="divider"></div>
+
+  <!-- ── FORM SECTION ── -->
+  <div class="form-section">
+    <div class="section-label">Prediction Engine</div>
+    <h2 class="section-title">Enter Your Metrics</h2>
+    <p class="section-desc">Provide your academic and cognitive data below. Our model will generate a personalised intelligence profile and outcome prediction.</p>
+
+    <div class="pills">
+      <div class="pill">Instant Results</div>
+      <div class="pill">ML-Powered</div>
+      <div class="pill">Private &amp; Secure</div>
+      <div class="pill">No Account Needed</div>
+    </div>
+
+    <div class="card">
+
+      <!-- Flask flash messages: {{ get_flashed_messages() }} -->
+      <!-- Flask will inject messages here via Jinja2 template -->
+      <!-- Example: {% for msg in get_flashed_messages() %}<div class="flash">{{ msg }}</div>{% endfor %} -->
+
+      <!--
+        FLASK INTEGRATION:
+        - Set action="/predict" (or your route) and method="POST"
+        - Flask reads: request.form['cgpa'] and request.form['iq']
+        - Render result by passing `result` from Python and showing #prediction-result
+      -->
+      <form action="/predict#prediction-result" method="POST" id="predictForm">
+
+        <div class="inputs-grid">
+
+          <!-- CGPA -->
+          <div class="field">
+            <label class="field-label" for="cgpa">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <rect x="1" y="1" width="10" height="10" rx="2" stroke="#9B6DFF" stroke-width="1.4"/>
+                <path d="M3.5 7.5L5 5.5L6.5 7L8 4.5" stroke="#9B6DFF" stroke-width="1.2" stroke-linecap="round"/>
+              </svg>
+              CGPA
+            </label>
+            <input
+              class="field-input" type="number" id="cgpa" name="cgpa"
+              min="0" max="10" step="0.01"
+              placeholder="e.g. 8.45"
+              autocomplete="off"
+              oninput="updateMeters()"
+            />
+            <span class="field-hint">Scale 0 – 10 &nbsp;·&nbsp; Two decimal places</span>
+          </div>
+
+          <!-- IQ -->
+          <div class="field">
+            <label class="field-label" for="iq">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <circle cx="6" cy="6" r="4.5" stroke="#00D4FF" stroke-width="1.4"/>
+                <path d="M4.5 5C4.5 4.17 5.17 3.5 6 3.5C6.83 3.5 7.5 4.17 7.5 5C7.5 5.83 6 6.5 6 7" stroke="#00D4FF" stroke-width="1.2" stroke-linecap="round"/>
+                <circle cx="6" cy="8.5" r=".6" fill="#00D4FF"/>
+              </svg>
+              IQ Score
+            </label>
+            <input
+              class="field-input" type="number" id="iq" name="iq"
+              min="40" max="200" step="1"
+              placeholder="e.g. 115"
+              autocomplete="off"
+              oninput="updateMeters()"
+            />
+            <span class="field-hint">Typical range 40 – 200</span>
+          </div>
+
+        </div><!-- /inputs-grid -->
+
+        <!-- Live meter bars -->
+        <div class="meters-row">
+          <div class="meter-block">
+            <div class="meter-top">
+              <span class="meter-name">CGPA Level</span>
+              <span class="meter-val" id="cgpa-display">–</span>
+            </div>
+            <div class="meter-bar-bg">
+              <div class="meter-bar-fill fill-cgpa" id="cgpa-bar" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="meter-block">
+            <div class="meter-top">
+              <span class="meter-name">IQ Percentile</span>
+              <span class="meter-val" id="iq-display">–</span>
+            </div>
+            <div class="meter-bar-bg">
+              <div class="meter-bar-fill fill-iq" id="iq-bar" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-predict" type="submit">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M9 2L16 9L9 16M2 9H16" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Generate Prediction
+        </button>
+
+      </form>
+
+      <!-- Result area — Flask sets result via template variable -->
+      <div class="result-area">
+        {% if result %}
+        <div id="prediction-result" class="visible">
+          {{result}}
+           
+        </div>
+        {% endif %}
+      </div>
+
+    </div><!-- /card -->
+  </div><!-- /form-section -->
+
+  <!-- ── INFO CARDS ── -->
+  <div class="info-row">
+
+    <div class="info-card">
+      <div class="info-icon icon-violet">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <path d="M11 2L13.5 8H20L14.5 12L16.5 18L11 14.5L5.5 18L7.5 12L2 8H8.5L11 2Z" fill="#9B6DFF" opacity=".85"/>
+        </svg>
+      </div>
+      <div class="info-title">CGPA — Grade Point Average</div>
+      <div class="info-body">
+        Cumulative Grade Point Average (0–10 scale) reflects your consistent academic performance across all semesters. Higher scores indicate stronger scholarly discipline and subject mastery.
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-icon icon-cyan">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <circle cx="11" cy="11" r="8" stroke="#00D4FF" stroke-width="1.5" opacity=".8"/>
+          <path d="M7 10.5C7 8.5 9 7 11 7C13 7 15 8.5 15 10.5C15 12 14 12.8 13 13.2V15H9V13.2C8 12.8 7 12 7 10.5Z" fill="#00D4FF" opacity=".7"/>
+          <line x1="9" y1="16.5" x2="13" y2="16.5" stroke="#00D4FF" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="info-title">IQ — Intelligence Quotient</div>
+      <div class="info-body">
+        IQ measures cognitive ability, reasoning, and problem-solving capacity. The global average is 100. Scores above 130 indicate gifted cognition; above 145 enters genius territory.
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-icon icon-pink">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <path d="M4 18L8 12L12 14L16 7L20 10" stroke="#FF6BD6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>
+          <circle cx="16" cy="7" r="2" fill="#FF6BD6" opacity=".8"/>
+        </svg>
+      </div>
+      <div class="info-title">Outcome Prediction</div>
+      <div class="info-body">
+        Our trained model correlates academic performance with cognitive metrics to forecast placement likelihood, career trajectory, and advanced study readiness with high precision.
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── FOOTER ── -->
+  <footer>
+    <p>Built with Flask &amp; love &nbsp;·&nbsp; <a href="#">IntellectAI</a> &nbsp;·&nbsp; Predictions are advisory only</p>
+  </footer>
+
+</div><!-- /page-wrapper -->
+
+<script>
+  /* ── STAR FIELD ── */
+  (function(){
+    const canvas = document.getElementById('starfield');
+    const ctx = canvas.getContext('2d');
+    let stars = [];
+    function resize(){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    function makeStars(){
+      stars = [];
+      for(let i=0;i<180;i++){
+        stars.push({
+          x: Math.random()*canvas.width, y: Math.random()*canvas.height,
+          r: Math.random()*1.3+.2,
+          op: 0, maxOp: Math.random()*.55+.15,
+          speed: Math.random()*.4+.15, phase: Math.random()*Math.PI*2
+        });
+      }
+    }
+    function draw(t){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      stars.forEach(s=>{
+        s.op = s.maxOp * (Math.sin(t/1000*s.speed + s.phase)*0.5+0.5);
+        ctx.globalAlpha = s.op;
+        ctx.fillStyle='#fff';
+        ctx.beginPath();
+        ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+        ctx.fill();
+      });
+      ctx.globalAlpha=1;
+      requestAnimationFrame(draw);
+    }
+    resize(); makeStars();
+    window.addEventListener('resize',()=>{ resize(); makeStars(); });
+    requestAnimationFrame(draw);
+  })();
+
+  /* ── LIVE METERS ── */
+  function updateMeters(){
+    const cgpaVal = parseFloat(document.getElementById('cgpa').value);
+    const iqVal   = parseFloat(document.getElementById('iq').value);
+
+    // CGPA bar (0-10 scale)
+    if(!isNaN(cgpaVal) && cgpaVal >= 0 && cgpaVal <= 10){
+      const pct = (cgpaVal/10)*100;
+      document.getElementById('cgpa-bar').style.width = pct + '%';
+      document.getElementById('cgpa-display').textContent = cgpaVal.toFixed(2);
+    } else {
+      document.getElementById('cgpa-bar').style.width = '0%';
+      document.getElementById('cgpa-display').textContent = '–';
+    }
+
+    // IQ bar (40-200 scale)
+    if(!isNaN(iqVal) && iqVal >= 40 && iqVal <= 200){
+      const pct = ((iqVal - 40)/(200 - 40))*100;
+      document.getElementById('iq-bar').style.width = pct + '%';
+      document.getElementById('iq-display').textContent = iqVal;
+    } else {
+      document.getElementById('iq-bar').style.width = '0%';
+      document.getElementById('iq-display').textContent = '–';
+    }
+  }
+
+  /* ── FORM VALIDATION ── */
+  document.getElementById('predictForm').addEventListener('submit', function(e){
+    const cgpa = parseFloat(document.getElementById('cgpa').value);
+    const iq   = parseFloat(document.getElementById('iq').value);
+    let ok = true;
+
+    if(isNaN(cgpa)||cgpa<0||cgpa>10){
+      document.getElementById('cgpa').style.borderColor='rgba(255,80,80,.7)';
+      ok = false;
+    } else {
+      document.getElementById('cgpa').style.borderColor='';
+    }
+    if(isNaN(iq)||iq<40||iq>200){
+      document.getElementById('iq').style.borderColor='rgba(255,80,80,.7)';
+      ok = false;
+    } else {
+      document.getElementById('iq').style.borderColor='';
+    }
+    if(!ok) e.preventDefault();
+  });
+</script>
+</body>
+</html>
