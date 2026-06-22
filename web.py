@@ -6,8 +6,6 @@ app=Flask(__name__)
 
 model=pickle.load(open("models.pkl","rb"))
 scalar=pickle.load(open("scalar.pkl","rb"))
-# print(model.predict([[8.5,120]]))
-# print(model.predict([[3,50]]))
 @app.route("/")
 def home():
     return render_template("index.html")
@@ -36,7 +34,5 @@ def predict():
         cgpa=cgpa,
         iq=iq
     )
-
-
 if __name__=="__main__":
     app.run(debug=True)
